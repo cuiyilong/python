@@ -1,0 +1,92 @@
+
+#coding=gbk
+import sys
+import os
+import wx
+import urllib
+import urllib2
+import BeautifulSoup
+
+def urlget(url):
+    html = urllib2.urlopen(url.encode('utf-8')).read().decode("utf-8")
+    soup=BeautifulSoup(html)
+    print soup
+    div=soup.find("div",id="dataidea_1")
+    for links in div.find_all("a",title=True):
+         links.get("title")
+   
+    print links.get("href")
+    html1=urllib2.urlopen(links.get("href"),timeout=5).read()
+    soup1=BeautifulSoup(html1)
+    div1=soup1.find("div",class_="redline")
+    if div1!=None:
+        
+        for link1 in div1.find_all("a",href=True):
+             print link1.get_text()
+        if soup1.find("p","txt_font1")!=None:
+            if  soup1.find("p","txt_font1").get_text().find("tp")>1:
+                print soup1.find("p","txt_font1").get_text()
+
+    print "\n"
+    print "\n"
+    pass
+
+def grab(event):
+    keyword = searchkeyword.GetValue()
+    
+    if bool(keyword) == 0:
+        wx.MessageBox("请输入搜索关键字!", u"出错提示", 
+        wx.OK | wx.ICON_INFORMATION)
+        return
+    else:
+        print keyword
+        
+    website="www.baidu.com/s?wd="
+    #url = "http://" + website + keyword
+    url = "http://www.51job.com/shanghai"
+    print url
+    urlget(url)
+    
+
+    pass
+
+def list(event):
+    
+    pass
+def save(event):
+    
+    savedlg = wx.FileDialog(win,u"保存结果到XML",
+            os.getcwd(),style=wx.SAVE | wx.OVERWRITE_PROMPT,
+                            wildcard="*.xml")
+    savedlg.ShowModal()
+    pass
+    
+app=wx.App()
+win=wx.Frame(None,title="企业信息抓取",size=(820,670))
+
+bkg=wx.Panel(win)
+
+grabBtn = wx.Button(bkg,label=u"开始抓取")
+listBtn = wx.Button(bkg,label=u"列出结果")
+saveBtn = wx.Button(bkg,label=u"保存结果")
+
+grabBtn.Bind(wx.EVT_BUTTON,grab)
+listBtn.Bind(wx.EVT_BUTTON,list)
+saveBtn.Bind(wx.EVT_BUTTON,save)
+
+searchkeyword = wx.TextCtrl(bkg)
+companyinfo = wx.TextCtrl(bkg,style=wx.TE_MULTILINE | wx.HSCROLL)
+
+hbox = wx.BoxSizer()
+hbox.Add(searchkeyword,proportion=1,flag=wx.EXPAND)
+hbox.Add(grabBtn,proportion=0,flag=wx.LEFT,border=5)
+hbox.Add(listBtn,proportion=0,flag=wx.LEFT,border=5)
+
+vbox = wx.BoxSizer(wx.VERTICAL)
+vbox.Add(hbox,proportion=0,flag=wx.EXPAND | wx.ALL,border=5)
+vbox.Add(companyinfo,proportion=1,flag=wx.EXPAND |wx.LEFT | wx.BOTTOM |wx.RIGHT,border=5)
+bkg.SetSizer(vbox)
+vbox.Add(saveBtn,proportion=0,flag=wx.EXPAND,border=4)
+win.Show()
+app.MainLoop()
+
