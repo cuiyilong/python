@@ -1,0 +1,51 @@
+###################
+##  LOCAL CONFIG ##
+###################
+ACIp=192.168.1.10
+HostIp=192.168.1.1
+HostMac=ec:88:8f:ea:cd:c3
+HostDev=eth2
+
+###################
+##  STATISTIC    ##
+###################
+Interval=5
+
+###################
+##  AP CONFIG    ##
+###################
+ApNum=30
+ApOnlineSpeed=10
+StaNumPerAp=30
+Vendorid=28723
+DeviceModel=N200-GA200i-AGN22
+SN=100010000001
+FirstApMac=00:00:00:00:00:01
+FirstApIp=192.168.2.1
+
+###################
+##  STA CONFIG   ##
+###################
+StaOnlineSpeed=50
+FirstStaMac=00:0a:00:00:00:01
+FirstStaIp=172.16.1.1
+
+###################
+##  PEAP CONFIG  ##
+###################
+PeapSpeed=10
+FirstPeapMac=00:0a:00:00:00:01
+FirstPeapIp=172.16.1.1
+
+####################
+##  PORTAL CONFIG ##
+####################
+PortalStaNum=8
+PortalStaOnlineSpeed=40
+
+####################
+##  RADIUS CONFIG ##
+####################
+RadiusServerIp=10.1.1.1
+RadiusClientIp=10.1.1.2
+

